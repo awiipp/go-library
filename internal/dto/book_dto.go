@@ -8,7 +8,7 @@ type CreateBookRequest struct {
 	Description string `json:"description" validate:"required"`
 }
 
-type UpdateBookrequest struct {
+type UpdateBookRequest struct {
 	Title       string `json:"title" validate:"required"`
 	Author      string `json:"author" validate:"required"`
 	Description string `json:"description" validate:"required"`

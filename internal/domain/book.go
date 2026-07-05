@@ -28,6 +28,6 @@ type BookUsecase interface {
 	GetAll(ctx context.Context) ([]*dto.BookResponse, error)
 	GetByID(ctx context.Context, id string) (*dto.BookResponse, error)
 	Create(ctx context.Context, req *dto.CreateBookRequest) (*dto.BookResponse, error)
-	Update(ctx context.Context, id string, req *dto.UpdateBookrequest) (*dto.BookResponse, error)
+	Update(ctx context.Context, id string, req *dto.UpdateBookRequest) (*dto.BookResponse, error)
 	Delete(ctx context.Context, id string) error
 }

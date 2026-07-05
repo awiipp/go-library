@@ -54,7 +54,7 @@ func (u *bookUsecase) Create(ctx context.Context, req *dto.CreateBookRequest) (*
 	return toBookResponse(saved), nil
 }
 
-func (u *bookUsecase) Update(ctx context.Context, id string, req *dto.UpdateBookrequest) (*dto.BookResponse, error) {
+func (u *bookUsecase) Update(ctx context.Context, id string, req *dto.UpdateBookRequest) (*dto.BookResponse, error) {
 	book, err := u.bookRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err

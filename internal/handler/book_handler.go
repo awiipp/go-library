@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/awiipp/go-library/internal/domain"
 	"github.com/awiipp/go-library/internal/dto"
@@ -18,6 +20,11 @@ type BookHandler struct {
 	validate *validator.Validate
 }
 
+const (
+	readTimeout  = 5 * time.Second
+	writeTimeout = 10 * time.Second
+)
+
 func NewBookHandler(usecase domain.BookUsecase) *BookHandler {
 	return &BookHandler{
 		usecase:  usecase,
@@ -26,7 +33,10 @@ func NewBookHandler(usecase domain.BookUsecase) *BookHandler {
 }
 
 func (h *BookHandler) Getall(c *fiber.Ctx) error {
-	result, err := h.usecase.GetAll(c.Context())
+	ctx, cancel := context.WithTimeout(c.Context(), readTimeout)
+	defer cancel()
+
+	result, err := h.usecase.GetAll(ctx)
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "internal server error")
 	}
@@ -35,13 +45,16 @@ func (h *BookHandler) Getall(c *fiber.Ctx) error {
 }
 
 func (h *BookHandler) GetByID(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), readTimeout)
+	defer cancel()
+
 	id := c.Params("id")
 
 	if _, err := uuid.Parse(id); err != nil {
 		return response.Error(c, http.StatusBadRequest, "invalid book id")
 	}
 
-	result, err := h.usecase.GetByID(c.Context(), id)
+	result, err := h.usecase.GetByID(ctx, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, pkgerrors.ErrNotFound):
@@ -55,6 +68,9 @@ func (h *BookHandler) GetByID(c *fiber.Ctx) error {
 }
 
 func (h *BookHandler) Create(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), writeTimeout)
+	defer cancel()
+
 	req := &dto.CreateBookRequest{}
 
 	if err := c.BodyParser(req); err != nil {
@@ -65,7 +81,7 @@ func (h *BookHandler) Create(c *fiber.Ctx) error {
 		return response.Error(c, http.StatusBadRequest, err.Error())
 	}
 
-	result, err := h.usecase.Create(c.Context(), req)
+	result, err := h.usecase.Create(ctx, req)
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "internal server error")
 	}
@@ -74,8 +90,11 @@ func (h *BookHandler) Create(c *fiber.Ctx) error {
 }
 
 func (h *BookHandler) Update(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), writeTimeout)
+	defer cancel()
+
 	id := c.Params("id")
-	req := &dto.UpdateBookrequest{}
+	req := &dto.UpdateBookRequest{}
 
 	if _, err := uuid.Parse(id); err != nil {
 		return response.Error(c, http.StatusBadRequest, "invalid book id")
@@ -89,7 +108,7 @@ func (h *BookHandler) Update(c *fiber.Ctx) error {
 		return response.Error(c, http.StatusBadRequest, err.Error())
 	}
 
-	result, err := h.usecase.Update(c.Context(), id, req)
+	result, err := h.usecase.Update(ctx, id, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, pkgerrors.ErrNotFound):
@@ -103,13 +122,16 @@ func (h *BookHandler) Update(c *fiber.Ctx) error {
 }
 
 func (h *BookHandler) Delete(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), writeTimeout)
+	defer cancel()
+
 	id := c.Params("id")
 
 	if _, err := uuid.Parse(id); err != nil {
 		return response.Error(c, http.StatusBadRequest, "invalid book id")
 	}
 
-	if err := h.usecase.Delete(c.Context(), id); err != nil {
+	if err := h.usecase.Delete(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, pkgerrors.ErrNotFound):
 			return response.Error(c, http.StatusNotFound, "book not found")
