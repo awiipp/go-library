@@ -3,12 +3,14 @@ services:
         container_name: "go-library-app"
         build:
             context: .
-            dockerfile: dockerfile.dev #development dockerfile
+            dockerfile: dockerfile.dev # development dockerfile
         env_file: .env
         ports:
             - "${APP_PORT}:${APP_PORT}"
         volumes:
             - .:/app
+            - go-mod-cache:/go/pkg/mod # module cache
+            - go-build-cache:/root/.cache/go-build # build cache
         depends_on:
             - postgres
 
