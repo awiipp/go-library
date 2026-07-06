@@ -44,7 +44,7 @@ func Connect(cfg *config.Config) (*sql.DB, error) {
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		if err := db.Ping(); err == nil {
-			log.Panicln("database connected")
+			log.Println("database connected")
 
 			return db, nil
 		} else {

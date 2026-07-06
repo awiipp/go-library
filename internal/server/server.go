@@ -15,7 +15,7 @@ func New(bookHandler *handler.BookHandler) *fiber.App {
 	app.Use(middleware.Logger())
 
 	// routes
-	v1 := app.Group("/api/v1")
+	v1 := app.Group("/v1/api")
 
 	books := v1.Group("/books")
 	books.Get("/", bookHandler.Getall)
