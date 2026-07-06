@@ -36,6 +36,7 @@ func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
 
 		err := rows.Scan(
 			&book.ID,
+			&book.Title,
 			&book.Author,
 			&book.Description,
 			&book.CreatedAt,
@@ -58,6 +59,7 @@ func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book,
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&book.ID,
+		&book.Title,
 		&book.Author,
 		&book.Description,
 		&book.CreatedAt,

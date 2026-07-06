@@ -26,6 +26,20 @@ services:
         volumes:
             - postgres-data:/var/lib/postgresql/data
 
+    migrate:
+        image: migrate/migrate
+        volumes:
+            - ./deploy/migrations:/migrations
+        env_file: .env
+        depends_on:
+            - postgres
+        entrypoint:
+            - "migrate"
+        command:
+            - -path=/migrations
+            - -database=postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
+            - up
+
 volumes:
     postgres-data:
     go-mod-cache:
