@@ -1,0 +1,16 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/app ./cmd/api"
+bin = "./tmp/app"
+
+include_ext = ["go"]
+
+exclude_dir = [
+    "tmp",
+    "vendor",
+]
+
+poll = true
+poll_interval = 1000

@@ -1,0 +1,30 @@
+services:
+    app:
+        container_name: "go-library-app"
+        build:
+            context: .
+            dockerfile: dockerfile.dev #development dockerfile
+        env_file: .env
+        ports:
+            - "${APP_PORT}:${APP_PORT}"
+        volumes:
+            - .:/app
+        depends_on:
+            - postgres
+
+    postgres:
+        container_name: "go-library-postgres"
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        ports:
+            - "${DB_PORT}:5432"
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+
+volumes:
+    postgres-data:
+    go-mod-cache:
+    go-build-cache:
