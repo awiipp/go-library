@@ -7,17 +7,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/awiipp/go-library/internal/cache"
 	"github.com/awiipp/go-library/internal/domain"
 	pkgerrors "github.com/awiipp/go-library/pkg/errors"
 	"github.com/google/uuid"
 )
 
 type bookRepository struct {
-	db *sql.DB
+	db        *sql.DB
+	bookCache *cache.BookCache
 }
 
-func NewBookRepository(db *sql.DB) domain.BookRepository {
-	return &bookRepository{db: db}
+func NewBookRepository(db *sql.DB, bookCache *cache.BookCache) domain.BookRepository {
+	return &bookRepository{
+		db:        db,
+		bookCache: bookCache,
+	}
 }
 
 func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
@@ -53,11 +58,20 @@ func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
 }
 
 func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book, error) {
+	book, err := r.bookCache.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("repository.FindByID cache: %w", err)
+	}
+
+	if book != nil {
+		return book, nil
+	}
+
 	query := `SELECT id, title, author, description, created_at, updated_at FROM books WHERE id = $1`
 
-	book := &domain.Book{}
+	book = &domain.Book{}
 
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
+	err = r.db.QueryRowContext(ctx, query, id).Scan(
 		&book.ID,
 		&book.Title,
 		&book.Author,
@@ -71,6 +85,10 @@ func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book,
 		}
 
 		return nil, fmt.Errorf("repository.FindByID: %w", err)
+	}
+
+	if err := r.bookCache.Set(ctx, book); err != nil {
+		fmt.Printf("failed to cache book %s: %v", id, err)
 	}
 
 	return book, nil
@@ -96,6 +114,10 @@ func (r *bookRepository) Save(ctx context.Context, book *domain.Book) (*domain.B
 	)
 	if err != nil {
 		return nil, fmt.Errorf("repository.Save: %w", err)
+	}
+
+	if err := r.bookCache.Set(ctx, book); err != nil {
+		fmt.Printf("failed to cache book %s: %v", book.ID, err)
 	}
 
 	return book, nil
@@ -129,6 +151,10 @@ func (r *bookRepository) Update(ctx context.Context, book *domain.Book) (*domain
 		return nil, pkgerrors.ErrNotFound
 	}
 
+	if err := r.bookCache.Set(ctx, book); err != nil {
+		fmt.Printf("failed to update cache for book %s: %v", book.ID, err)
+	}
+
 	return book, nil
 }
 
@@ -146,6 +172,10 @@ func (r *bookRepository) Delete(ctx context.Context, id string) error {
 	}
 	if rowsAffected == 0 {
 		return pkgerrors.ErrNotFound
+	}
+
+	if err := r.bookCache.Delete(ctx, id); err != nil {
+		fmt.Printf("failed to delete cache for book %s: %v", id, err)
 	}
 
 	return nil

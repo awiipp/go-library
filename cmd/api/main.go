@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/awiipp/go-library/internal/cache"
 	"github.com/awiipp/go-library/internal/config"
 	"github.com/awiipp/go-library/internal/database"
 	"github.com/awiipp/go-library/internal/handler"
@@ -17,7 +18,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	// connect database
+	// database connection
 	db, err := database.Connect(cfg)
 	if err != nil {
 		log.Fatal(err)
@@ -25,8 +26,17 @@ func main() {
 
 	defer db.Close()
 
+	// redis connection
+	redisClient, err := cache.RedisClient(cfg.Redis)
+	if err != nil {
+		log.Fatalf("failed to connect redis: %v", err)
+	}
+
+	defer redisClient.Close()
+
 	// wiring repository, usecase, handler
-	bookRepo := repository.NewBookRepository(db)
+	bookCache := cache.NewBookCache(redisClient)
+	bookRepo := repository.NewBookRepository(db, bookCache)
 	bookUsecase := usecase.NewBookUsecase(bookRepo)
 	bookHandler := handler.NewBookHandler(bookUsecase)
 

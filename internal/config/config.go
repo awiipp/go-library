@@ -2,13 +2,15 @@ package config
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	App AppConfig
-	DB  DBConfig
+	App   AppConfig
+	DB    DBConfig
+	Redis RedisConfig
 }
 
 type AppConfig struct {
@@ -26,8 +28,20 @@ type DBConfig struct {
 	SSLMode  string
 }
 
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
+}
+
 func Load() *Config {
 	_ = godotenv.Load()
+
+	db, err := strconv.Atoi(getEnv("REDIS_DB", "0"))
+	if err != nil {
+		db = 0
+	}
 
 	return &Config{
 		App: AppConfig{
@@ -42,6 +56,12 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", ""),
 			Name:     getEnv("DB_NAME", "postgres"),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		},
+		Redis: RedisConfig{
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       db,
 		},
 	}
 }
