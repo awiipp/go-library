@@ -16,7 +16,7 @@ services:
             - redis
 
     postgres:
-        container_name: "go-library-postgres"
+        container_name: "go-library-book-postgres"
         image: postgres:17-alpine
         environment:
             POSTGRES_USER: ${DB_USER}
@@ -25,15 +25,15 @@ services:
         ports:
             - "${DB_PORT}:5432"
         volumes:
-            - postgres-data:/var/lib/postgresql/data
+            - postgres-data-book:/var/lib/postgresql/data
 
     redis:
-        container_name: "go-library-redis"
+        container_name: "go-library-book-redis"
         image: redis:8-alpine
         ports:
             - "${REDIS_PORT}:6379"
         volumes:
-            - redis-data:/data
+            - redis-data-book:/data
 
     migrate:
         image: migrate/migrate
@@ -50,7 +50,7 @@ services:
             - up
 
 volumes:
-    postgres-data:
-    redis-data:
+    postgres-data-book:
+    redis-data-book:
     go-mod-cache:
     go-build-cache:
