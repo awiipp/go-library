@@ -15,7 +15,7 @@ type userUsecase struct {
 	userRepo domain.UserRepository
 }
 
-func NewUserUsecase(userRepo domain.UserRepository) domain.UserRepository {
+func NewUserUsecase(userRepo domain.UserRepository) domain.UserUsecase {
 	return &userUsecase{userRepo: userRepo}
 }
 
@@ -63,4 +63,8 @@ func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest
 		Role:     string(user.Role),
 		IsActive: user.IsActive,
 	}, nil
+}
+
+func (u *userUsecase) Login(ctx context.Context, req *dto.LoginUserRequest) (*domain.User, error) {
+	return nil, nil // WIP
 }
