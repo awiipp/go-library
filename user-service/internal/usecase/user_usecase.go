@@ -4,19 +4,25 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/awiipp/go-library/user-service/internal/config"
 	"github.com/awiipp/go-library/user-service/internal/domain"
 	"github.com/awiipp/go-library/user-service/internal/dto"
 	pkgerrors "github.com/awiipp/go-library/user-service/pkg/errors"
+	"github.com/awiipp/go-library/user-service/pkg/utils"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type userUsecase struct {
 	userRepo domain.UserRepository
+	cfg      *config.Config
 }
 
-func NewUserUsecase(userRepo domain.UserRepository) domain.UserUsecase {
-	return &userUsecase{userRepo: userRepo}
+func NewUserUsecase(userRepo domain.UserRepository, config *config.Config) domain.UserUsecase {
+	return &userUsecase{
+		userRepo: userRepo,
+		cfg:      config,
+	}
 }
 
 func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest) (*dto.UserResponse, error) {
@@ -65,6 +71,34 @@ func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest
 	}, nil
 }
 
-func (u *userUsecase) Login(ctx context.Context, req *dto.LoginUserRequest) (*domain.User, error) {
-	return nil, nil // WIP
+func (u *userUsecase) Login(ctx context.Context, req *dto.LoginUserRequest) (*dto.LoginResponse, error) {
+	// user check
+	user, err := u.userRepo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.Login.FindByEmail: %w", err)
+	}
+
+	if user == nil {
+		return nil, pkgerrors.ErrInvalidCredentials
+	}
+
+	if !user.IsActive {
+		return nil, pkgerrors.ErrUserInactive
+	}
+
+	// password check
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, pkgerrors.ErrInvalidCredentials
+	}
+
+	token, err := utils.GenerateToken(u.cfg, user.ID, string(user.Role))
+	if err != nil {
+		return nil, fmt.Errorf("usecase.Login.GenerateToken: %w", err)
+	}
+
+	return &dto.LoginResponse{
+		Token:     token,
+		TokenType: "Bearer",
+		ExpiresIn: u.cfg.JWT.ExpiresIn,
+	}, nil
 }

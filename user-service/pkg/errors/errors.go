@@ -10,4 +10,6 @@ var (
 	ErrInternalServer        = errors.New("internal server")
 	ErrEmailAlreadyExists    = errors.New("email already exists")
 	ErrUsernameAlreadyExists = errors.New("username already exists")
+	ErrInvalidCredentials    = errors.New("invalid email or password")
+	ErrUserInactive          = errors.New("user is inactive")
 )
