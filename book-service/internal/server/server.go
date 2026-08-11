@@ -18,7 +18,7 @@ func New(bookHandler *handler.BookHandler) *fiber.App {
 	v1 := app.Group("/v1/api")
 
 	books := v1.Group("/books")
-	books.Get("/", bookHandler.Getall)
+	books.Get("/", bookHandler.GetAll)
 	books.Get("/:id", bookHandler.GetByID)
 	books.Post("/", bookHandler.Create)
 	books.Put("/:id", bookHandler.Update)

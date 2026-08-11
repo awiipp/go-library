@@ -32,7 +32,7 @@ func NewBookHandler(usecase domain.BookUsecase) *BookHandler {
 	}
 }
 
-func (h *BookHandler) Getall(c *fiber.Ctx) error {
+func (h *BookHandler) GetAll(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.Context(), readTimeout)
 	defer cancel()
 

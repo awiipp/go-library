@@ -45,7 +45,7 @@ func Load() *Config {
 
 	return &Config{
 		App: AppConfig{
-			Name: getEnv("APP_NAME", "go-library"),
+			Name: getEnv("APP_NAME", "go-library-book-service"),
 			Env:  getEnv("APP_ENV", "development"),
 			Port: getEnv("APP_PORT", "9000"),
 		},

@@ -54,6 +54,10 @@ func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
 		books = append(books, book)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("repository.FindAll: %w", err)
+	}
+
 	return books, nil
 }
 
@@ -104,7 +108,8 @@ func (r *bookRepository) Save(ctx context.Context, book *domain.Book) (*domain.B
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.db.ExecContext(
+		ctx, query,
 		book.ID,
 		book.Title,
 		book.Author,
@@ -132,7 +137,8 @@ func (r *bookRepository) Update(ctx context.Context, book *domain.Book) (*domain
 		WHERE id = $5
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := r.db.ExecContext(
+		ctx, query,
 		book.Title,
 		book.Author,
 		book.Description,
