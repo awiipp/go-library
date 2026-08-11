@@ -4,12 +4,31 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
+	App AppConfig
+	DB  DBConfig
 	JWT JWTConfig
+}
+
+type AppConfig struct {
+	Name string
+	Env  string
+	Port string
+}
+
+type DBConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+	SSLMode  string
 }
 
 type JWTConfig struct {
@@ -19,7 +38,38 @@ type JWTConfig struct {
 	ExpiresIn  int64 // second
 }
 
-func Load(privatePath, publicPath, issuer string, expiresIn int64) (*Config, error) {
+func Load() (*Config, error) {
+	_ = godotenv.Load()
+
+	jwtCfg, err := loadJWTConfig(
+		getEnv("JWT_PRIVATE_KEY_PATH", "./certs/private.pem"),
+		getEnv("JWT_PUBLIC_KEY_PATH", "./certs/public.pem"),
+		getEnv("JWT_ISSUER", "user-service"),
+		getEnvInt64("JWT_EXPIRES_IN", 3600),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("config.Load: %w", err)
+	}
+
+	return &Config{
+		App: AppConfig{
+			Name: getEnv("APP_NAME", "go-library-user-service"),
+			Env:  getEnv("APP_ENV", "development"),
+			Port: getEnv("APP_PORT", "9000"),
+		},
+		DB: DBConfig{
+			Host:     getEnv("DB_HOST", "localhost"),
+			Port:     getEnv("DB_PORT", "5432"),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", ""),
+			Name:     getEnv("DB_NAME", "postgres"),
+			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		},
+		JWT: *jwtCfg,
+	}, nil
+}
+
+func loadJWTConfig(privatePath, publicPath, issuer string, expiresIn int64) (*JWTConfig, error) {
 	// private key
 	privBytes, err := os.ReadFile(privatePath)
 	if err != nil {
@@ -42,12 +92,32 @@ func Load(privatePath, publicPath, issuer string, expiresIn int64) (*Config, err
 		return nil, fmt.Errorf("config.Load parse private: %w", err)
 	}
 
-	return &Config{
-		JWT: JWTConfig{
-			PrivateKey: privKey,
-			PublicKey:  pubKey,
-			Issuer:     issuer,
-			ExpiresIn:  expiresIn,
-		},
+	return &JWTConfig{
+		PrivateKey: privKey,
+		PublicKey:  pubKey,
+		Issuer:     issuer,
+		ExpiresIn:  expiresIn,
 	}, nil
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+
+	return defaultValue
+}
+
+func getEnvInt64(key string, defaultValue int64) int64 {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return defaultValue
+	}
+
+	return parsed
 }

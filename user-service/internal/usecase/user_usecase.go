@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/awiipp/go-library/user-service/internal/config"
@@ -27,7 +28,7 @@ func NewUserUsecase(userRepo domain.UserRepository, config *config.Config) domai
 
 func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest) (*dto.UserResponse, error) {
 	existing, err := u.userRepo.FindByEmail(ctx, req.Email)
-	if err != nil {
+	if err != nil && !errors.Is(err, pkgerrors.ErrNotFound) {
 		return nil, fmt.Errorf("usecase.Register.FindByEmail: %w", err)
 	}
 	if existing != nil {
@@ -35,7 +36,7 @@ func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest
 	}
 
 	existing, err = u.userRepo.FindByUsername(ctx, req.Username)
-	if err != nil {
+	if err != nil && !errors.Is(err, pkgerrors.ErrNotFound) {
 		return nil, fmt.Errorf("usecase.Register.FindByUsername: %w", err)
 	}
 	if existing != nil {
@@ -61,20 +62,13 @@ func (u *userUsecase) Register(ctx context.Context, req *dto.RegisterUserRequest
 		return nil, fmt.Errorf("usecase.Register.Create: %w", err)
 	}
 
-	return &dto.UserResponse{
-		ID:       user.ID,
-		Email:    user.Email,
-		Username: user.Username,
-		FullName: user.FullName,
-		Role:     string(user.Role),
-		IsActive: user.IsActive,
-	}, nil
+	return toUserResponse(user), nil
 }
 
 func (u *userUsecase) Login(ctx context.Context, req *dto.LoginUserRequest) (*dto.LoginResponse, error) {
 	// user check
 	user, err := u.userRepo.FindByEmail(ctx, req.Email)
-	if err != nil {
+	if err != nil && !errors.Is(err, pkgerrors.ErrNotFound) {
 		return nil, fmt.Errorf("usecase.Login.FindByEmail: %w", err)
 	}
 
@@ -101,4 +95,13 @@ func (u *userUsecase) Login(ctx context.Context, req *dto.LoginUserRequest) (*dt
 		TokenType: "Bearer",
 		ExpiresIn: u.cfg.JWT.ExpiresIn,
 	}, nil
+}
+
+func (u *userUsecase) GetProfile(ctx context.Context, userID string) (*dto.UserResponse, error) {
+	user, err := u.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.GetProfile: %w", err)
+	}
+
+	return toUserResponse(user), nil
 }

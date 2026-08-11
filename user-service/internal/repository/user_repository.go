@@ -25,6 +25,8 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 		return fmt.Errorf("repository.Create: %w", result.Error)
 	}
 
+	*user = *toDomain(m)
+
 	return nil
 }
 
