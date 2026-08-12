@@ -65,7 +65,7 @@ func (u *bookUsecase) Create(ctx context.Context, req *dto.CreateBookRequest) (*
 func (u *bookUsecase) Update(ctx context.Context, id string, req *dto.UpdateBookRequest) (*dto.BookResponse, error) {
 	book, err := u.bookRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.Update: %w", err)
 	}
 
 	book.Title = req.Title
@@ -77,13 +77,13 @@ func (u *bookUsecase) Update(ctx context.Context, id string, req *dto.UpdateBook
 		return nil, fmt.Errorf("usecase.Update: %w", err)
 	}
 
-	return toBookResponse(updated), err
+	return toBookResponse(updated), nil
 }
 
 func (u *bookUsecase) Delete(ctx context.Context, id string) error {
 	_, err := u.bookRepo.FindByID(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("usecase.Delete: %w", err)
 	}
 
 	if err := u.bookRepo.Delete(ctx, id); err != nil {
