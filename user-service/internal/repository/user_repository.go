@@ -8,6 +8,7 @@ import (
 	"github.com/awiipp/go-library/user-service/internal/domain"
 	"github.com/awiipp/go-library/user-service/internal/repository/model"
 	pkgerrors "github.com/awiipp/go-library/user-service/pkg/errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,19 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 	m := toModel(user)
+
 	if result := r.db.WithContext(ctx).Create(m); result.Error != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(result.Error, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "users_email_key":
+				return pkgerrors.ErrEmailAlreadyExists
+			case "users_username_key":
+				return pkgerrors.ErrUsernameAlreadyExists
+			}
+			return pkgerrors.ErrConflict
+		}
+
 		return fmt.Errorf("repository.Create: %w", result.Error)
 	}
 
