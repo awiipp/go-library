@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/awiipp/go-library/internal/domain"
 	"github.com/awiipp/go-library/internal/dto"
+	"github.com/awiipp/go-library/internal/usecase"
 	pkgerrors "github.com/awiipp/go-library/pkg/errors"
 	"github.com/awiipp/go-library/pkg/response"
 	"github.com/go-playground/validator/v10"
@@ -16,7 +16,7 @@ import (
 )
 
 type BookHandler struct {
-	usecase  domain.BookUsecase
+	usecase  usecase.BookUsecase
 	validate *validator.Validate
 }
 
@@ -25,7 +25,7 @@ const (
 	writeTimeout = 10 * time.Second
 )
 
-func NewBookHandler(usecase domain.BookUsecase) *BookHandler {
+func NewBookHandler(usecase usecase.BookUsecase) *BookHandler {
 	return &BookHandler{
 		usecase:  usecase,
 		validate: validator.New(),

@@ -14,12 +14,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserUsecase interface {
+	Register(ctx context.Context, req *dto.RegisterUserRequest) (*dto.UserResponse, error)
+	Login(ctx context.Context, req *dto.LoginUserRequest) (*dto.LoginResponse, error)
+	GetProfile(ctx context.Context, userID string) (*dto.UserResponse, error)
+}
+
 type userUsecase struct {
 	userRepo domain.UserRepository
 	cfg      *config.Config
 }
 
-func NewUserUsecase(userRepo domain.UserRepository, config *config.Config) domain.UserUsecase {
+func NewUserUsecase(userRepo domain.UserRepository, config *config.Config) UserUsecase {
 	return &userUsecase{
 		userRepo: userRepo,
 		cfg:      config,

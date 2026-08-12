@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/awiipp/go-library/user-service/internal/domain"
 	"github.com/awiipp/go-library/user-service/internal/dto"
+	"github.com/awiipp/go-library/user-service/internal/usecase"
 	pkgerrors "github.com/awiipp/go-library/user-service/pkg/errors"
 	"github.com/awiipp/go-library/user-service/pkg/response"
 	"github.com/go-playground/validator/v10"
@@ -17,11 +17,11 @@ import (
 const readTimeout = 5 * time.Second
 
 type UserHandler struct {
-	usecase  domain.UserUsecase
+	usecase  usecase.UserUsecase
 	validate *validator.Validate
 }
 
-func NewUserHandler(usecase domain.UserUsecase) *UserHandler {
+func NewUserHandler(usecase usecase.UserUsecase) *UserHandler {
 	return &UserHandler{
 		usecase:  usecase,
 		validate: validator.New(),

@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/awiipp/go-library/user-service/internal/dto"
 )
 
 type Role string
@@ -31,10 +29,4 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindByID(ctx context.Context, id string) (*User, error)
-}
-
-type UserUsecase interface {
-	Register(ctx context.Context, req *dto.RegisterUserRequest) (*dto.UserResponse, error)
-	Login(ctx context.Context, req *dto.LoginUserRequest) (*dto.LoginResponse, error)
-	GetProfile(ctx context.Context, userID string) (*dto.UserResponse, error)
 }
