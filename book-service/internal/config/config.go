@@ -1,9 +1,12 @@
 package config
 
 import (
+	"crypto/rsa"
+	"fmt"
 	"os"
 	"strconv"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 )
 
@@ -11,6 +14,7 @@ type Config struct {
 	App   AppConfig
 	DB    DBConfig
 	Redis RedisConfig
+	JWT   JWTConfig
 }
 
 type AppConfig struct {
@@ -35,8 +39,18 @@ type RedisConfig struct {
 	DB       int
 }
 
+type JWTConfig struct {
+	PublicKey *rsa.PublicKey
+	Issuer    string
+}
+
 func Load() *Config {
 	_ = godotenv.Load()
+
+	jwtCfg, err := loadJWTConfig(
+		getEnv("JWT_PUBLIC_KEY_PATH", "./certs/public.pem"),
+		getEnv("JWT_ISSUER", "user-service"),
+	)
 
 	db, err := strconv.Atoi(getEnv("REDIS_DB", "0"))
 	if err != nil {
@@ -63,7 +77,25 @@ func Load() *Config {
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       db,
 		},
+		JWT: *jwtCfg,
 	}
+}
+
+func loadJWTConfig(publicPath, issuer string) (*JWTConfig, error) {
+	pubBytes, err := os.ReadFile(publicPath)
+	if err != nil {
+		return nil, fmt.Errorf("config.Load read publicKey: %w", err)
+	}
+
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubBytes)
+	if err != nil {
+		return nil, fmt.Errorf("config.Load parse publicKey: %w", err)
+	}
+
+	return &JWTConfig{
+		PublicKey: pubKey,
+		Issuer:    issuer,
+	}, nil
 }
 
 func getEnv(key, defaultValue string) string {

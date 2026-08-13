@@ -1,13 +1,14 @@
 package server
 
 import (
+	"github.com/awiipp/go-library/internal/config"
 	"github.com/awiipp/go-library/internal/handler"
 	"github.com/awiipp/go-library/internal/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-func New(bookHandler *handler.BookHandler) *fiber.App {
+func New(bookHandler *handler.BookHandler, cfg *config.Config) *fiber.App {
 	app := fiber.New()
 
 	// global middleware
@@ -17,7 +18,10 @@ func New(bookHandler *handler.BookHandler) *fiber.App {
 	// routes
 	v1 := app.Group("/v1/api")
 
-	books := v1.Group("/books")
+	// auth middleware
+	protected := v1.Group("/", middleware.RequireAuth(cfg))
+
+	books := protected.Group("/books")
 	books.Get("/", bookHandler.GetAll)
 	books.Get("/:id", bookHandler.GetByID)
 	books.Post("/", bookHandler.Create)

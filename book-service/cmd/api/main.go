@@ -41,7 +41,7 @@ func main() {
 	bookHandler := handler.NewBookHandler(bookUsecase)
 
 	// http server
-	app := server.New(bookHandler)
+	app := server.New(bookHandler, cfg)
 
 	go func() {
 		if err := app.Listen(":" + cfg.App.Port); err != nil {
