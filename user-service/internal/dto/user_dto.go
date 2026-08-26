@@ -14,6 +14,10 @@ type LoginUserRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
 type UserResponse struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
@@ -26,7 +30,8 @@ type UserResponse struct {
 }
 
 type LoginResponse struct {
-	Token     string `json:"token"`
-	TokenType string `json:"token_type"`
-	ExpiresIn int64  `json:"expires_in"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int64  `json:"expires_in"`
 }

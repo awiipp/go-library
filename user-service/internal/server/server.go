@@ -21,6 +21,7 @@ func New(userHandler *handler.UserHandler, cfg *config.Config) *fiber.App {
 	auth := v1.Group("/auth")
 	auth.Post("/register", userHandler.Register)
 	auth.Post("/login", userHandler.Login)
+	auth.Post("/refresh", userHandler.RefreshToken)
 
 	// auth middleware
 	protected := v1.Group("/users", middleware.RequireAuth(cfg))

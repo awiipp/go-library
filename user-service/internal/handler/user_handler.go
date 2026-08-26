@@ -85,6 +85,34 @@ func (u *UserHandler) Login(c *fiber.Ctx) error {
 	return response.Success(c, http.StatusOK, result)
 }
 
+func (u *UserHandler) RefreshToken(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), readTimeout)
+	defer cancel()
+
+	req := &dto.RefreshTokenRequest{}
+
+	if err := c.BodyParser(req); err != nil {
+		return response.Error(c, http.StatusBadRequest, "invalid body request")
+	}
+	if err := u.validate.Struct(req); err != nil {
+		return response.Error(c, http.StatusBadRequest, err.Error())
+	}
+
+	result, err := u.usecase.RefreshToken(ctx, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, pkgerrors.ErrInvalidRefreshToken):
+			return response.Error(c, http.StatusUnauthorized, "invalid or expired refresh token")
+		case errors.Is(err, pkgerrors.ErrUserInactive):
+			return response.Error(c, http.StatusForbidden, "user is inactive")
+		default:
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+	}
+
+	return response.Success(c, http.StatusOK, result)
+}
+
 func (u *UserHandler) Profile(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.Context(), readTimeout)
 	defer cancel()

@@ -11,9 +11,10 @@ import (
 )
 
 type Config struct {
-	App AppConfig
-	DB  DBConfig
-	JWT JWTConfig
+	App  AppConfig
+	DB   DBConfig
+	JWT  JWTConfig
+	Auth AuthConfig
 }
 
 type AppConfig struct {
@@ -35,7 +36,11 @@ type JWTConfig struct {
 	PrivateKey *rsa.PrivateKey
 	PublicKey  *rsa.PublicKey
 	Issuer     string
-	ExpiresIn  int64 // second
+	ExpiresIn  int64 // seconds
+}
+
+type AuthConfig struct {
+	RefreshTokenTTL int64 // days
 }
 
 func Load() (*Config, error) {
@@ -45,7 +50,7 @@ func Load() (*Config, error) {
 		getEnv("JWT_PRIVATE_KEY_PATH", "./certs/private.pem"),
 		getEnv("JWT_PUBLIC_KEY_PATH", "./certs/public.pem"),
 		getEnv("JWT_ISSUER", "user-service"),
-		getEnvInt64("JWT_EXPIRES_IN", 3600),
+		getEnvInt64("JWT_EXPIRES_IN", 900),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("config.Load: %w", err)
@@ -66,6 +71,9 @@ func Load() (*Config, error) {
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
 		},
 		JWT: *jwtCfg,
+		Auth: AuthConfig{
+			RefreshTokenTTL: getEnvInt64("REFRESH_TOKEN_TTL", 7),
+		},
 	}, nil
 }
 

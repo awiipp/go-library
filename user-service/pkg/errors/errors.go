@@ -12,4 +12,5 @@ var (
 	ErrUsernameAlreadyExists = errors.New("username already exists")
 	ErrInvalidCredentials    = errors.New("invalid email or password")
 	ErrUserInactive          = errors.New("user is inactive")
+	ErrInvalidRefreshToken   = errors.New("invalid or expired refresh token")
 )

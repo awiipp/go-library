@@ -21,7 +21,7 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	m := toModel(user)
+	m := toUserModel(user)
 
 	if result := r.db.WithContext(ctx).Create(m); result.Error != nil {
 		var pgErr *pgconn.PgError
@@ -38,7 +38,7 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 		return fmt.Errorf("repository.Create: %w", result.Error)
 	}
 
-	*user = *toDomain(m)
+	*user = *toUserDomain(m)
 
 	return nil
 }
@@ -54,7 +54,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 		return nil, err
 	}
 
-	return toDomain(m), nil
+	return toUserDomain(m), nil
 }
 
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
@@ -68,7 +68,7 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 		return nil, err
 	}
 
-	return toDomain(m), nil
+	return toUserDomain(m), nil
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
@@ -82,5 +82,5 @@ func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User,
 		return nil, err
 	}
 
-	return toDomain(m), nil
+	return toUserDomain(m), nil
 }

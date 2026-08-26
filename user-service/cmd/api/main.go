@@ -32,7 +32,8 @@ func main() {
 
 	// wiring repository, usecase, handler
 	userRepo := repository.NewUserRepository(db)
-	userUsecase := usecase.NewUserUsecase(userRepo, cfg)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
+	userUsecase := usecase.NewUserUsecase(userRepo, refreshTokenRepo, cfg)
 	userHandler := handler.NewUserHandler(userUsecase)
 
 	// http server

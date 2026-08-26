@@ -5,7 +5,7 @@ import (
 	"github.com/awiipp/go-library/user-service/internal/repository/model"
 )
 
-func toModel(u *domain.User) *model.User {
+func toUserModel(u *domain.User) *model.User {
 	return &model.User{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -19,7 +19,7 @@ func toModel(u *domain.User) *model.User {
 	}
 }
 
-func toDomain(u *model.User) *domain.User {
+func toUserDomain(u *model.User) *domain.User {
 	return &domain.User{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -30,5 +30,27 @@ func toDomain(u *model.User) *domain.User {
 		IsActive:  u.IsActive,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
+	}
+}
+
+func toRefreshTokenModel(rt *domain.RefreshToken) *model.RefreshToken {
+	return &model.RefreshToken{
+		ID:        rt.ID,
+		UserID:    rt.UserID,
+		TokenHash: rt.TokenHash,
+		ExpiresAt: rt.ExpiresAt,
+		RevokedAt: rt.RevokedAt,
+		CreatedAt: rt.CreatedAt,
+	}
+}
+
+func toRefreshTokenDomain(rt *model.RefreshToken) *domain.RefreshToken {
+	return &domain.RefreshToken{
+		ID:        rt.ID,
+		UserID:    rt.UserID,
+		TokenHash: rt.TokenHash,
+		ExpiresAt: rt.ExpiresAt,
+		RevokedAt: rt.RevokedAt,
+		CreatedAt: rt.CreatedAt,
 	}
 }
