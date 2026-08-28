@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/awiipp/go-library/internal/cache"
@@ -64,7 +65,7 @@ func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
 func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book, error) {
 	book, err := r.bookCache.Get(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("repository.FindByID cache: %w", err)
+		log.Printf("repository.FindByID cache: %v", err)
 	}
 
 	if book != nil {
@@ -92,7 +93,7 @@ func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book,
 	}
 
 	if err := r.bookCache.Set(ctx, book); err != nil {
-		fmt.Printf("failed to cache book %s: %v", id, err)
+		log.Printf("failed to cache book %s: %v", id, err)
 	}
 
 	return book, nil

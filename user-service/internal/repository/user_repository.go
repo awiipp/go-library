@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
+	"github.com/awiipp/go-library/user-service/internal/cache"
 	"github.com/awiipp/go-library/user-service/internal/domain"
 	"github.com/awiipp/go-library/user-service/internal/repository/model"
 	pkgerrors "github.com/awiipp/go-library/user-service/pkg/errors"
@@ -13,11 +15,12 @@ import (
 )
 
 type userRepository struct {
-	db *gorm.DB
+	db           *gorm.DB
+	profileCache *cache.ProfileCache
 }
 
-func NewUserRepository(db *gorm.DB) domain.UserRepository {
-	return &userRepository{db: db}
+func NewUserRepository(db *gorm.DB, profileCache *cache.ProfileCache) domain.UserRepository {
+	return &userRepository{db: db, profileCache: profileCache}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
@@ -72,14 +75,27 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	profile, err := r.profileCache.Get(ctx, id)
+	if err != nil {
+		log.Printf("repository.FindByID cache: %v", err)
+	}
+
+	if profile != nil {
+		return profile, nil
+	}
+
 	m := &model.User{}
 
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(m).Error
+	err = r.db.WithContext(ctx).Where("id = ?", id).First(m).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, pkgerrors.ErrNotFound
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	if err := r.profileCache.Set(ctx, toUserDomain(m)); err != nil {
+		log.Printf("failed to cache profile %s: %v", id, err)
 	}
 
 	return toUserDomain(m), nil

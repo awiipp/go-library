@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/awiipp/go-library/user-service/internal/cache"
 	"github.com/awiipp/go-library/user-service/internal/config"
 	"github.com/awiipp/go-library/user-service/internal/database"
 	"github.com/awiipp/go-library/user-service/internal/handler"
@@ -30,8 +31,17 @@ func main() {
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 
+	// redis connection
+	redisClient, err := cache.RedisClient(cfg.Redis)
+	if err != nil {
+		log.Fatalf("failed to connect redis: %v", err)
+	}
+
+	defer redisClient.Close()
+
 	// wiring repository, usecase, handler
-	userRepo := repository.NewUserRepository(db)
+	profileCache := cache.NewProfileCache(redisClient)
+	userRepo := repository.NewUserRepository(db, profileCache)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo, refreshTokenRepo, cfg)
 	userHandler := handler.NewUserHandler(userUsecase)
