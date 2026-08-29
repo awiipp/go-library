@@ -15,3 +15,15 @@ func toBookResponse(book *domain.Book) *dto.BookResponse {
 		UpdatedAt:   book.UpdatedAt,
 	}
 }
+
+func toLoanResponse(loan *domain.Loan) *dto.LoanResponse {
+	return &dto.LoanResponse{
+		ID:         loan.ID,
+		BookID:     loan.BookID,
+		UserID:     loan.UserID,
+		Status:     string(loan.Status),
+		BorrowedAt: loan.BorrowedAt,
+		DueAt:      loan.DueAt,
+		ReturnedAt: loan.ReturnedAt,
+	}
+}

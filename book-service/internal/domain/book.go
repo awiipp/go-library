@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -10,6 +11,7 @@ type Book struct {
 	Title       string
 	Author      string
 	Description string
+	Stock       int
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -20,4 +22,6 @@ type BookRepository interface {
 	Save(ctx context.Context, book *Book) (*Book, error)
 	Update(ctx context.Context, book *Book) (*Book, error)
 	Delete(ctx context.Context, id string) error
+	DecreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error
+	IncreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error
 }

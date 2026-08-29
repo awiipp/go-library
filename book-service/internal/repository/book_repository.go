@@ -27,7 +27,7 @@ func NewBookRepository(db *sql.DB, bookCache *cache.BookCache) domain.BookReposi
 }
 
 func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
-	query := `SELECT id, title, author, description, created_at, updated_at FROM books ORDER BY created_at DESC`
+	query := `SELECT id, title, author, description, stock, created_at, updated_at FROM books ORDER BY created_at DESC`
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -45,6 +45,7 @@ func (r *bookRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
 			&book.Title,
 			&book.Author,
 			&book.Description,
+			&book.Stock,
 			&book.CreatedAt,
 			&book.UpdatedAt,
 		)
@@ -72,7 +73,7 @@ func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book,
 		return book, nil
 	}
 
-	query := `SELECT id, title, author, description, created_at, updated_at FROM books WHERE id = $1`
+	query := `SELECT id, title, author, description, stock, created_at, updated_at FROM books WHERE id = $1`
 
 	book = &domain.Book{}
 
@@ -81,6 +82,7 @@ func (r *bookRepository) FindByID(ctx context.Context, id string) (*domain.Book,
 		&book.Title,
 		&book.Author,
 		&book.Description,
+		&book.Stock,
 		&book.CreatedAt,
 		&book.UpdatedAt,
 	)
@@ -105,7 +107,7 @@ func (r *bookRepository) Save(ctx context.Context, book *domain.Book) (*domain.B
 	book.UpdatedAt = time.Now()
 
 	query := `
-		INSERT INTO books (id, title, author, description, created_at, updated_at)
+		INSERT INTO books (id, title, author, description, stock, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
@@ -115,6 +117,7 @@ func (r *bookRepository) Save(ctx context.Context, book *domain.Book) (*domain.B
 		book.Title,
 		book.Author,
 		book.Description,
+		book.Stock,
 		book.CreatedAt,
 		book.UpdatedAt,
 	)
@@ -134,8 +137,8 @@ func (r *bookRepository) Update(ctx context.Context, book *domain.Book) (*domain
 
 	query := `
 		UPDATE books
-		SET title = $1, author = $2, description = $3, updated_at = $4
-		WHERE id = $5
+		SET title = $1, author = $2, description = $3, stock = $4, updated_at = $5
+		WHERE id = $6
 	`
 
 	result, err := r.db.ExecContext(
@@ -143,6 +146,7 @@ func (r *bookRepository) Update(ctx context.Context, book *domain.Book) (*domain
 		book.Title,
 		book.Author,
 		book.Description,
+		book.Stock,
 		book.UpdatedAt,
 		book.ID,
 	)
@@ -183,6 +187,36 @@ func (r *bookRepository) Delete(ctx context.Context, id string) error {
 
 	if err := r.bookCache.Delete(ctx, id); err != nil {
 		fmt.Printf("failed to delete cache for book %s: %v", id, err)
+	}
+
+	return nil
+}
+
+func (r *bookRepository) DecreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error {
+	query := `UPDATE books SET stock = stock - 1 WHERE id = $1 AND stock > 0`
+
+	result, err := tx.ExecContext(ctx, query, bookID)
+	if err != nil {
+		return fmt.Errorf("repository.DecreaseStockTx: %w", err)
+	}
+
+	rowAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("repository.DecreaseStockTx: %w", err)
+	}
+	if rowAffected == 0 {
+		return pkgerrors.ErrOutOfStock
+	}
+
+	return nil
+}
+
+func (r *bookRepository) IncreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error {
+	query := `UPDATE books SET stock = stock + 1 WHERE id = $1`
+
+	_, err := tx.ExecContext(ctx, query, bookID)
+	if err != nil {
+		return fmt.Errorf("repository.IncreaseStockTx: %w", err)
 	}
 
 	return nil

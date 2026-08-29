@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-func New(bookHandler *handler.BookHandler, cfg *config.Config) *fiber.App {
+func New(bookHandler *handler.BookHandler, loanHandler *handler.LoanHandler, cfg *config.Config) *fiber.App {
 	app := fiber.New()
 
 	// global middleware
@@ -27,6 +27,11 @@ func New(bookHandler *handler.BookHandler, cfg *config.Config) *fiber.App {
 	books.Post("/", bookHandler.Create)
 	books.Put("/:id", bookHandler.Update)
 	books.Delete("/:id", bookHandler.Delete)
+	books.Post("/:id/borrow", loanHandler.Borrow)
+
+	loans := protected.Group("/loans")
+	loans.Post("/:id/return", loanHandler.Return)
+	loans.Get("/me", loanHandler.MyLoan)
 
 	return app
 }

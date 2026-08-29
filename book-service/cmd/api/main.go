@@ -37,11 +37,16 @@ func main() {
 	// wiring repository, usecase, handler
 	bookCache := cache.NewBookCache(redisClient)
 	bookRepo := repository.NewBookRepository(db, bookCache)
+	loanRepo := repository.NewLoanRepository(db)
+
 	bookUsecase := usecase.NewBookUsecase(bookRepo)
+	loanUsecase := usecase.NewLoanUsecase(db, bookRepo, loanRepo)
+
 	bookHandler := handler.NewBookHandler(bookUsecase)
+	loanHandler := handler.NewLoanHandler(loanUsecase)
 
 	// http server
-	app := server.New(bookHandler, cfg)
+	app := server.New(bookHandler, loanHandler, cfg)
 
 	go func() {
 		if err := app.Listen(":" + cfg.App.Port); err != nil {
