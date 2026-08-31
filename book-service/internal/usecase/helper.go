@@ -11,6 +11,7 @@ func toBookResponse(book *domain.Book) *dto.BookResponse {
 		Title:       book.Title,
 		Author:      book.Author,
 		Description: book.Description,
+		Stock:       book.Stock,
 		CreatedAt:   book.CreatedAt,
 		UpdatedAt:   book.UpdatedAt,
 	}

@@ -52,6 +52,7 @@ func (u *bookUsecase) Create(ctx context.Context, req *dto.CreateBookRequest) (*
 		Title:       req.Title,
 		Author:      req.Author,
 		Description: req.Description,
+		Stock:       req.Stock,
 	}
 
 	saved, err := u.bookRepo.Save(ctx, book)
@@ -71,6 +72,7 @@ func (u *bookUsecase) Update(ctx context.Context, id string, req *dto.UpdateBook
 	book.Title = req.Title
 	book.Author = req.Author
 	book.Description = req.Description
+	book.Stock = req.Stock
 
 	updated, err := u.bookRepo.Update(ctx, book)
 	if err != nil {

@@ -108,7 +108,7 @@ func (r *bookRepository) Save(ctx context.Context, book *domain.Book) (*domain.B
 
 	query := `
 		INSERT INTO books (id, title, author, description, stock, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	_, err := r.db.ExecContext(
