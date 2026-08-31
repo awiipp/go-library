@@ -37,7 +37,7 @@ func NewLoanUsecase(db *sql.DB, bookRepo domain.BookRepository, loanRepo domain.
 func (u *loanUsecase) BorrowBook(ctx context.Context, bookID, userID string) (*dto.LoanResponse, error) {
 	// check: book is already borrowed by user
 	exists, err := u.loanRepo.FindActiveByBookAndUser(ctx, bookID, userID)
-	if err != nil && errors.Is(err, pkgerrors.ErrNotFound) {
+	if err != nil && !errors.Is(err, pkgerrors.ErrNotFound) {
 		return nil, fmt.Errorf("usecase.BorrowBook.FindActiveByBookAndUser: %w", err)
 	}
 	if exists != nil {
