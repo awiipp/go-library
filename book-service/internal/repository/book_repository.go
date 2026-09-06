@@ -192,17 +192,18 @@ func (r *bookRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *bookRepository) DecreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error {
+func (r *bookRepository) DecreaseStock(ctx context.Context, bookID string) error {
+	exec := getExecutor(ctx, r.db)
 	query := `UPDATE books SET stock = stock - 1 WHERE id = $1 AND stock > 0`
 
-	result, err := tx.ExecContext(ctx, query, bookID)
+	result, err := exec.ExecContext(ctx, query, bookID)
 	if err != nil {
-		return fmt.Errorf("repository.DecreaseStockTx: %w", err)
+		return fmt.Errorf("repository.DecreaseStock: %w", err)
 	}
 
 	rowAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("repository.DecreaseStockTx: %w", err)
+		return fmt.Errorf("repository.DecreaseStock: %w", err)
 	}
 	if rowAffected == 0 {
 		return pkgerrors.ErrOutOfStock
@@ -211,12 +212,13 @@ func (r *bookRepository) DecreaseStockTx(ctx context.Context, tx *sql.Tx, bookID
 	return nil
 }
 
-func (r *bookRepository) IncreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error {
+func (r *bookRepository) IncreaseStock(ctx context.Context, bookID string) error {
+	exec := getExecutor(ctx, r.db)
 	query := `UPDATE books SET stock = stock + 1 WHERE id = $1`
 
-	_, err := tx.ExecContext(ctx, query, bookID)
+	_, err := exec.ExecContext(ctx, query, bookID)
 	if err != nil {
-		return fmt.Errorf("repository.IncreaseStockTx: %w", err)
+		return fmt.Errorf("repository.IncreaseStock: %w", err)
 	}
 
 	return nil

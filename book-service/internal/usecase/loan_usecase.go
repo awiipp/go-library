@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -21,14 +20,14 @@ type LoanUsecase interface {
 }
 
 type loanUsecase struct {
-	db       *sql.DB
+	tx       domain.Transactor
 	bookRepo domain.BookRepository
 	loanRepo domain.LoanRepository
 }
 
-func NewLoanUsecase(db *sql.DB, bookRepo domain.BookRepository, loanRepo domain.LoanRepository) LoanUsecase {
+func NewLoanUsecase(tx domain.Transactor, bookRepo domain.BookRepository, loanRepo domain.LoanRepository) LoanUsecase {
 	return &loanUsecase{
-		db:       db,
+		tx:       tx,
 		bookRepo: bookRepo,
 		loanRepo: loanRepo,
 	}
@@ -44,34 +43,25 @@ func (u *loanUsecase) BorrowBook(ctx context.Context, bookID, userID string) (*d
 		return nil, pkgerrors.ErrAlreadyBorrowed
 	}
 
-	// begin transaction
-	tx, err := u.db.BeginTx(ctx, nil)
+	loan := &domain.Loan{}
+	err = u.tx.WithinTransaction(ctx, func(txCtx context.Context) error {
+		if err := u.bookRepo.DecreaseStock(txCtx, bookID); err != nil {
+			return err
+		}
+
+		now := time.Now()
+		loan = &domain.Loan{
+			BookID:     bookID,
+			UserID:     userID,
+			Status:     domain.LoanStatusActive,
+			BorrowedAt: now,
+			DueAt:      now.Add(loanDuration),
+		}
+
+		return u.loanRepo.Create(txCtx, loan)
+	})
 	if err != nil {
-		return nil, fmt.Errorf("usecase.BorrowBook.BeginTx: %w", err)
-	}
-
-	defer tx.Rollback()
-
-	if err := u.bookRepo.DecreaseStockTx(ctx, tx, bookID); err != nil {
-		return nil, err // ErrOutOfStock
-	}
-
-	now := time.Now()
-	loan := &domain.Loan{
-		BookID:     bookID,
-		UserID:     userID,
-		Status:     domain.LoanStatusActive,
-		BorrowedAt: now,
-		DueAt:      now.Add(loanDuration),
-	}
-
-	if err := u.loanRepo.Create(ctx, tx, loan); err != nil {
-		return nil, fmt.Errorf("usecase.BorrowBook.Create: %w", err)
-	}
-
-	// commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("usecase.BorrowBook.Commit: %w", err)
+		return nil, fmt.Errorf("usecase.BorrowBook: %w", err)
 	}
 
 	return toLoanResponse(loan), nil
@@ -90,26 +80,18 @@ func (u *loanUsecase) ReturnBook(ctx context.Context, loanID, userID string) err
 		return pkgerrors.ErrLoanAlreadyReturned
 	}
 
-	// begin transaction
-	tx, err := u.db.BeginTx(ctx, nil)
+	err = u.tx.WithinTransaction(ctx, func(txCtx context.Context) error {
+		now := time.Now()
+		// mark loan as returned
+		if err := u.loanRepo.MarkReturned(txCtx, loanID, now); err != nil {
+			return fmt.Errorf("usecase.ReturnBook.MarkReturned: %w", err)
+		}
+
+		// increase book stock
+		return u.bookRepo.IncreaseStock(txCtx, loan.BookID)
+	})
 	if err != nil {
-		return fmt.Errorf("usecase.ReturnBook.BeginTx: %w", err)
-	}
-	defer tx.Rollback()
-
-	now := time.Now()
-	// mark loan as returned
-	if err := u.loanRepo.MarkReturned(ctx, tx, loanID, now); err != nil {
-		return fmt.Errorf("usecase.ReturnBook.MarkReturned: %w", err)
-	}
-	// increase book stock
-	if err := u.bookRepo.IncreaseStockTx(ctx, tx, loan.BookID); err != nil {
-		return fmt.Errorf("usecase.ReturnBook.IncreaseStockTx: %w", err)
-	}
-
-	// commit transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("usecase.ReturnBook.Commit: %w", err)
+		return fmt.Errorf("usecase.ReturnBook: %w", err)
 	}
 
 	return nil

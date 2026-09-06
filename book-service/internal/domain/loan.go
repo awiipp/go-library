@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -24,9 +23,9 @@ type Loan struct {
 }
 
 type LoanRepository interface {
-	Create(ctx context.Context, tx *sql.Tx, loan *Loan) error
+	Create(ctx context.Context, loan *Loan) error
 	FindByID(ctx context.Context, id string) (*Loan, error)
 	FindActiveByBookAndUser(ctx context.Context, bookID, userID string) (*Loan, error)
 	FindByUserID(ctx context.Context, userID string) ([]*Loan, error)
-	MarkReturned(ctx context.Context, tx *sql.Tx, id string, returnedAt time.Time) error
+	MarkReturned(ctx context.Context, id string, returnedAt time.Time) error
 }

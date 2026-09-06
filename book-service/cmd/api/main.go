@@ -38,9 +38,10 @@ func main() {
 	bookCache := cache.NewBookCache(redisClient)
 	bookRepo := repository.NewBookRepository(db, bookCache)
 	loanRepo := repository.NewLoanRepository(db)
+	transactor := repository.NewTransactor(db)
 
 	bookUsecase := usecase.NewBookUsecase(bookRepo)
-	loanUsecase := usecase.NewLoanUsecase(db, bookRepo, loanRepo)
+	loanUsecase := usecase.NewLoanUsecase(transactor, bookRepo, loanRepo)
 
 	bookHandler := handler.NewBookHandler(bookUsecase)
 	loanHandler := handler.NewLoanHandler(loanUsecase)

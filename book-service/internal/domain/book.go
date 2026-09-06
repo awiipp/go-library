@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -22,6 +21,6 @@ type BookRepository interface {
 	Save(ctx context.Context, book *Book) (*Book, error)
 	Update(ctx context.Context, book *Book) (*Book, error)
 	Delete(ctx context.Context, id string) error
-	DecreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error
-	IncreaseStockTx(ctx context.Context, tx *sql.Tx, bookID string) error
+	DecreaseStock(ctx context.Context, bookID string) error
+	IncreaseStock(ctx context.Context, bookID string) error
 }

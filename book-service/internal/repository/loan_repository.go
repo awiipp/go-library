@@ -20,15 +20,17 @@ func NewLoanRepository(db *sql.DB) domain.LoanRepository {
 	return &loanRepository{db: db}
 }
 
-func (r *loanRepository) Create(ctx context.Context, tx *sql.Tx, loan *domain.Loan) error {
+func (r *loanRepository) Create(ctx context.Context, loan *domain.Loan) error {
 	loan.ID = uuid.NewString()
+
+	exec := getExecutor(ctx, r.db)
 
 	query := `
 		INSERT INTO loans (id, book_id, user_id, status, borrowed_at, due_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := tx.ExecContext(ctx, query, loan.ID, loan.BookID, loan.UserID, loan.Status, loan.BorrowedAt, loan.DueAt)
+	_, err := exec.ExecContext(ctx, query, loan.ID, loan.BookID, loan.UserID, loan.Status, loan.BorrowedAt, loan.DueAt)
 	if err != nil {
 		return fmt.Errorf("repository.Create: %w", err)
 	}
@@ -125,10 +127,12 @@ func (r *loanRepository) FindByUserID(ctx context.Context, userID string) ([]*do
 	return loans, nil
 }
 
-func (r *loanRepository) MarkReturned(ctx context.Context, tx *sql.Tx, id string, returnedAt time.Time) error {
+func (r *loanRepository) MarkReturned(ctx context.Context, id string, returnedAt time.Time) error {
+	exec := getExecutor(ctx, r.db)
+
 	query := `UPDATE loans SET status = 'returned', returned_at = $1 WHERE id = $2`
 
-	_, err := tx.ExecContext(ctx, query, returnedAt, id)
+	_, err := exec.ExecContext(ctx, query, returnedAt, id)
 	if err != nil {
 		return fmt.Errorf("repository.MarkReturned: %w", err)
 	}
