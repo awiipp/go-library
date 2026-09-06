@@ -223,3 +223,7 @@ func (r *bookRepository) IncreaseStock(ctx context.Context, bookID string) error
 
 	return nil
 }
+
+func (r *bookRepository) InvalidateCache(ctx context.Context, bookID string) error {
+	return r.bookCache.Delete(ctx, bookID)
+}

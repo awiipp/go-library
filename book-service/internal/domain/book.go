@@ -23,4 +23,5 @@ type BookRepository interface {
 	Delete(ctx context.Context, id string) error
 	DecreaseStock(ctx context.Context, bookID string) error
 	IncreaseStock(ctx context.Context, bookID string) error
+	InvalidateCache(ctx context.Context, bookID string) error
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/awiipp/go-library/internal/domain"
@@ -64,6 +65,10 @@ func (u *loanUsecase) BorrowBook(ctx context.Context, bookID, userID string) (*d
 		return nil, fmt.Errorf("usecase.BorrowBook: %w", err)
 	}
 
+	if err := u.bookRepo.InvalidateCache(ctx, bookID); err != nil {
+		log.Printf("failed to invalidate book cache %s: %v", bookID, err)
+	}
+
 	return toLoanResponse(loan), nil
 }
 
@@ -92,6 +97,10 @@ func (u *loanUsecase) ReturnBook(ctx context.Context, loanID, userID string) err
 	})
 	if err != nil {
 		return fmt.Errorf("usecase.ReturnBook: %w", err)
+	}
+
+	if err := u.bookRepo.InvalidateCache(ctx, loan.BookID); err != nil {
+		log.Printf("failed to invalidate book cache %s: %v", loan.BookID, err)
 	}
 
 	return nil
