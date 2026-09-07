@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/awiipp/go-library/internal/config"
@@ -41,10 +42,8 @@ func RequireRole(roles ...string) fiber.Handler {
 			return response.Error(c, http.StatusUnauthorized, "unauthorized")
 		}
 
-		for _, r := range roles {
-			if role == r {
-				return c.Next()
-			}
+		if slices.Contains(roles, role) {
+			return c.Next()
 		}
 
 		return response.Error(c, http.StatusForbidden, "insufficient permissions")
