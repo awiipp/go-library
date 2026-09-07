@@ -75,18 +75,20 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
-	profile, err := r.profileCache.Get(ctx, id)
-	if err != nil {
-		log.Printf("repository.FindByID cache: %v", err)
-	}
+	if r.profileCache != nil {
+		profile, err := r.profileCache.Get(ctx, id)
+		if err != nil {
+			log.Printf("repository.FindByID cache: %v", err)
+		}
 
-	if profile != nil {
-		return profile, nil
+		if profile != nil {
+			return profile, nil
+		}
 	}
 
 	m := &model.User{}
 
-	err = r.db.WithContext(ctx).Where("id = ?", id).First(m).Error
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(m).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, pkgerrors.ErrNotFound
 	}

@@ -24,9 +24,9 @@ func New(bookHandler *handler.BookHandler, loanHandler *handler.LoanHandler, cfg
 	books := protected.Group("/books")
 	books.Get("/", bookHandler.GetAll)
 	books.Get("/:id", bookHandler.GetByID)
-	books.Post("/", bookHandler.Create)
-	books.Put("/:id", bookHandler.Update)
-	books.Delete("/:id", bookHandler.Delete)
+	books.Post("/", middleware.RequireRole("admin"), bookHandler.Create)
+	books.Put("/:id", middleware.RequireRole("admin"), bookHandler.Update)
+	books.Delete("/:id", middleware.RequireRole("admin"), bookHandler.Delete)
 	books.Post("/:id/borrow", loanHandler.Borrow)
 
 	loans := protected.Group("/loans")
